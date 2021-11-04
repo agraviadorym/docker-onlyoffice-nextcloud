@@ -2,7 +2,7 @@ version: '3'
 services:
   app:
     container_name: app-server
-    image: nextcloud:fpm
+    build: ./app
     restart: always
     expose:
       - '80'
@@ -29,8 +29,45 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - app_data:/var/www/html
+
+  db:
+    image: mariadb
+    container_name: db
+    command: --innodb-read-only-compressed=OFF
+    volumes:
+      - mysql_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=abcd.1234
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_PASSWORD=nextcloud
+    ports:
+      - 3306:3306
+    restart: always
+
+  elasticsearch:
+    # DOCKER_TAG will be provided by either the (docker hub) environment or inside the .env-file
+    image: r0wi/elasticsearch-nextcloud-docker:7.7.0
+    container_name: elasticsearch
+    restart: always
+    environment:
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - discovery.type=single-node
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      # Use named volume because of permission problems
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+
 volumes:
   document_data:
   document_log:
   app_data:
   mysql_data:
+  elasticsearch_data:
