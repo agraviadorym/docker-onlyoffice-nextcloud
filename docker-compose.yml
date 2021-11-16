@@ -2,7 +2,7 @@ version: '3'
 services:
   app:
     container_name: app-server
-    build: ./app
+    image: nextcloud:latest
     restart: always
     expose:
       - '80'
